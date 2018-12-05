@@ -1,0 +1,19 @@
+{
+  "name": "electron_shopping",
+  "version": "1.0.0",
+  "description": "Electron desktop app for shopping",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "desktop",
+    "app"
+  ],
+  "author": "Sai Prasad",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^3.0.10"
+  }
+}
