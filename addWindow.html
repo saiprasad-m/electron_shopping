@@ -11,7 +11,9 @@
     <form>
         <div>
             <label>Create Item</label>
-            <input type="text" id="item" autofocus>
+            <input type="text" id="item" autofocus><br/>
+            <input class="right sm" type="text" id="qty" size=3 placeholder="Qty">
+            <input class="right sm" type="text" id="price" size=3 placeholder="Price">
         </div>
         <button class="btn waves-effect waves-light" type="submit">Add Item</button>    
     </form>
@@ -24,7 +26,9 @@
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const item = document.querySelector('#item').value;
-            ipcRenderer.send('item:add', item);
+            const qty = document.querySelector('#qty').value;
+            const price = document.querySelector('#price').value;
+            ipcRenderer.send('item:add', {item, qty, price});
         })
 
     </script>

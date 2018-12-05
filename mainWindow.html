@@ -12,31 +12,63 @@
             <a class="brand-logo center">Shopping using Electron</a>
         </div>
     </nav>
-    <ul></ul>
+    <ol></ol>
+    <footer style="position: fixed; bottom: 0; width: 100%;">
+        <div class="right sm">
+        Total Items:<input class="right sm" type="text" id="total" value=0 size=4 readonly/>
+        <br/>Total Cost:<input class="right sm" type="text" id="cost" value=0 size=6 readonly/>
+        <br/>CGST: <div class="right xs" id="cgst"> </div> <br/>
+        SGST: <div class="right xs" id="sgst" ></div>
+    </div>
+    </footer>
 
     <script>
         const electron = require('electron');
         const {ipcRenderer} = electron;
-        const ul = document.querySelector('ul');
+        const ul = document.querySelector('ol');
 
-        ipcRenderer.on('item:add', (e,item) => {
+        ipcRenderer.on('item:add', (e,{item, qty, price}) => {
             ul.className = 'collection'
             const li = document.createElement('li');
-            const itemText = document.createTextNode(item);
+            let row = "<div class='left sm'>" + item + "</div>"
+            row += "<div class='center sm'>" + qty + "</div>"
+            row += "<div class='right sm'>" + price + "</div>"
+             
+            const itemText = document.createTextNode(row);
             li.className = 'collection-item'
-            li.appendChild(itemText);
+            li.innerHTML = row;
+            
             ul.appendChild(li);
+            const total = document.querySelector('#total');
+            const cost = document.querySelector('#cost');
+            const cgst = document.querySelector('#cgst');
+            const sgst = document.querySelector('#sgst');
+            cost.value = parseFloat(cost.value) + (qty * price)
+            cgst.textContent = 0.09 * parseInt(cost.value)
+            sgst.textContent = 0.09 * parseInt(cost.value)
+            
+            total.value = ul.children.length;
 
         } )
 
         ipcRenderer.on('item:clear', () => {
             ul.innerHTML = '';
             if(ul.children.length==0) ul.className = ''
+            const total = document.querySelector('#total');
+            const cost = document.querySelector('#cost');
+            const cgst = document.querySelector('#cgst');
+            const sgst = document.querySelector('#sgst');
+            cost.value = 0.0
+            cgst.textContent = 0.0
+            sgst.textContent = 0.0            
+            total.value = ul.children.length;            
         } )   
         
         ul.addEventListener('dblclick', (e) => {
             e.target.remove();
             if(ul.children.length==0) ul.className = ''
+            const total = document.querySelector('#total');
+            total.value = ul.children.length; 
         }
         )
     </script>

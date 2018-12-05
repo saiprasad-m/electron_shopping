@@ -8,7 +8,7 @@ let mainWindow;
 let addWindow;
 let mainMainTemplate = [];
 
-process.env.NODE_ENV = 'production'
+//process.env.NODE_ENV = 'production'
 
 
 app.on('ready', () => {
