@@ -101,8 +101,8 @@
             const cgst = document.querySelector('#cgst');
             const sgst = document.querySelector('#sgst');
             cost.value = parseFloat(cost.value) + (qty * price)
-            cgst.textContent = 0.09 * parseInt(cost.value)
-            sgst.textContent = 0.09 * parseInt(cost.value)
+            cgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)
+            sgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)
             
             total.value = ul.children.length - 1;
 
@@ -145,8 +145,8 @@
                 const cgst = document.querySelector('#cgst');
                 const sgst = document.querySelector('#sgst');
                 cost.value = parseFloat(cost.value) - itemcost
-                cgst.textContent = 0.09 * parseInt(cost.value)
-                sgst.textContent = 0.09 * parseInt(cost.value)                
+                cgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)
+                sgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)                
             }
             if(ul.children.length==1) ul.className = ''
             const total = document.querySelector('#total');
