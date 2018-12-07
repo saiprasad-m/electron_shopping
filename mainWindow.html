@@ -22,6 +22,7 @@
                 text-align: center;
                 margin-bottom: 5rem;
             }
+            ol li:first-child { list-style:none }
         </style>
 </head>
 <body>
@@ -32,7 +33,7 @@
     </nav>
     <article>
     <div class="flex-row-container">   
-        <div style='flex-grow: 2' class='sm'>
+        <div style='flex-grow: 1' class='sm'>
             <div class="flex-graph-container">
                 
                 <div style="height:12vh; width:20vw">
@@ -46,12 +47,20 @@
                 </div>
             </div>
         </div>
-        <div style='flex-grow: 8' class='sm'>
-            <div class="container">
+        <div style='flex-grow: 11' class='sm'>
                 <div class="card card-body" >
-                    <ol></ol>
+                    <ul>
+                        <li class="collection-header nostyle">
+                                <div class='flex-row-container'>
+                                    <div style='flex-grow: 1' class='sm'>#</div>
+                                    <div style='flex-grow: 6' class='sm'>Item Name</div>
+                                    <div style='flex-grow: 1' class='sm'>Qty</div>
+                                    <div style='flex-grow: 1' class='sm'>Price</div>
+                                    <div style='flex-grow: 1' class='sm'>Sum</div>
+                                </div>                           
+                        </li>
+                    </ul>
                 </div>
-            </div>
         </div>
 
     </div>
@@ -69,15 +78,18 @@
     <script>
         const electron = require('electron');
         const {ipcRenderer} = electron;
-        const ul = document.querySelector('ol');
+        const ul = document.querySelector('ul');
 
         ipcRenderer.on('item:add', (e,{item, qty, price}) => {
             ul.className = 'collection'
             const li = document.createElement('li');
             let row = "<div class='flex-row-container'>"
+            row += "<div style='flex-grow: 1' class='sm'>" + (ul.children.length) + "</div>"
             row += "<div style='flex-grow: 6' class='sm'>" + item + "</div>"
             row += "<div style='flex-grow: 1' class='sm'>" + qty + "</div>"
-            row += "<div style='flex-grow: 2' class='sm'>" + price + "</div></div>"
+            row += "<div style='flex-grow: 1' class='sm'>" + price + "</div>"
+            let sum = qty * price;
+            row += "<div style='flex-grow: 1' class='sm'>" + sum + "</div></div>"
              
             const itemText = document.createTextNode(row);
             li.className = 'collection-item'
@@ -92,13 +104,24 @@
             cgst.textContent = 0.09 * parseInt(cost.value)
             sgst.textContent = 0.09 * parseInt(cost.value)
             
-            total.value = ul.children.length;
+            total.value = ul.children.length - 1;
 
         } )
 
         ipcRenderer.on('item:clear', () => {
-            ul.innerHTML = '';
-            if(ul.children.length==0) ul.className = ''
+            console.log(ul.children.length)
+            if(ul.children.length > 1) {
+                ul.innerHTML = "<li class='collection-header nostyle'> " + 
+                                "<div class='flex-row-container'>" +
+                                    "<div style='flex-grow: 1' class='sm'>#</div>" +
+                                    "<div style='flex-grow: 6' class='sm'>Item Name</div>" +
+                                    "<div style='flex-grow: 1' class='sm'>Qty</div>" +
+                                    "<div style='flex-grow: 1' class='sm'>Price</div>" +
+                                    "<div style='flex-grow: 1' class='sm'>Sum</div>" +
+                                "</div>" +                          
+                        "</li>";
+                ul.className = ''
+            } 
             const total = document.querySelector('#total');
             const cost = document.querySelector('#cost');
             const cgst = document.querySelector('#cgst');
@@ -106,15 +129,30 @@
             cost.value = 0.0
             cgst.textContent = 0.0
             sgst.textContent = 0.0            
-            total.value = ul.children.length;            
+            total.value = ul.children.length -1;            
         } )   
         
         ul.addEventListener('dblclick', (e) => {
-            console.log(e);
-            e.target.remove();
-            if(ul.children.length==0) ul.className = ''
+            
+            console.log(e.target.localName === 'div')
+            if(e.target.localName !== 'div') {
+                let qty = e.target.querySelector('.flex-row-container > div:nth-child(3)').textContent;
+                let price = e.target.querySelector('.flex-row-container > div:nth-child(4)').textContent;
+
+                let itemcost = parseFloat(parseFloat(qty) * parseFloat(price))
+                e.target.remove();
+                const cost = document.querySelector('#cost');
+                const cgst = document.querySelector('#cgst');
+                const sgst = document.querySelector('#sgst');
+                cost.value = parseFloat(cost.value) - itemcost
+                cgst.textContent = 0.09 * parseInt(cost.value)
+                sgst.textContent = 0.09 * parseInt(cost.value)                
+            }
+            if(ul.children.length==1) ul.className = ''
             const total = document.querySelector('#total');
-            total.value = ul.children.length; 
+            total.value = ul.children.length - 1; 
+
+
         }
         )
 
