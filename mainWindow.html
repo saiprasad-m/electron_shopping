@@ -4,14 +4,31 @@
     <title>Electron Shopping</title>
         <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+   integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+   crossorigin=""/>
+
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+ <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+ integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+ crossorigin=""></script>
+
+
         <style>
+            #map {
+			    width: 38vw;
+			    height: 54vh;
+                padding: 10px;
+		    }
+
             .flex-row-container {
               display: flex;
               align-items: stretch;
              }
             
             .flex-row-container > div {
-              text-align: center;
+              text-align: left;
             }
             .flex-graph-container {
                 display: flex;
@@ -28,7 +45,7 @@
 <body>
     <nav>
         <div class="nav-wrapper">
-            <a class="brand-logo center">Shopping using Electron</a>
+            <a class="brand-logo center">Shop and Deliver App</a>
         </div>
     </nav>
     <article>
@@ -36,38 +53,44 @@
         <div style='flex-grow: 1' class='sm'>
             <div class="flex-graph-container">
                 
-                <div style="height:12vh; width:20vw">
+                <div style="height:18vh; width:20vw;">
                     <canvas id="myChart1" width="50" height="30"></canvas>
                 </div>
-                <div style="height:18vh; width:20vw">
+                <div style="height:18vh; width:20vw;">
                     <canvas id="myChart2" width="50" height="30"></canvas>
                 </div>
-                <div style="height:18vh; width:20vw">
+                <div style="height:18vh; width:20vw;">
                     <canvas id="myChart3" width="50" height="40"></canvas>
                 </div>
             </div>
         </div>
-        <div style='flex-grow: 11' class='sm'>
-                <div class="card card-body" >
-                    <ul>
-                        <li class="collection-header nostyle">
-                                <div class='flex-row-container'>
-                                    <div style='flex-grow: 1' class='sm'>#</div>
-                                    <div style='flex-grow: 6' class='sm'>Item Name</div>
-                                    <div style='flex-grow: 1' class='sm'>Qty</div>
-                                    <div style='flex-grow: 1' class='sm'>Price</div>
-                                    <div style='flex-grow: 1' class='sm'>Sum</div>
-                                </div>                           
-                        </li>
-                    </ul>
+        <div style='flex: 0.5'></div>
+        <div style='flex-grow: 15' class='mx-2 my-5 sm'>
+                <div class="card card-body " style="padding:1em" >
+                    <table class="table table-striped" id="table">
+                        <thead class="collection-header xs">
+                                <tr class='sm'>
+                                    <th style='flex-grow: 1' class='xs'>#</th>
+                                    <th style='flex: 2 1 auto' class='xs'>Item Name</th>
+                                    <th style='flex-grow: 1' class='xs'>Qty</th>
+                                    <th style='flex-grow: 1' class='xs'>Price</th>
+                                    <th style='flex-grow: 1' class='xs'>Sum</th>
+                                </tr>                           
+                            </thead>
+                    </table>
                 </div>
         </div>
+        <div style='flex: 0.5'></div>
+        <div style='flex: 5 3 auto pull-right' class='xs'>
+                    <h6 style='text-align: center'>Delivery Map</h6>
+                    <div id='map'></div>
 
+        </div>
     </div>
     </article>
 
     <footer style="position: fixed; bottom: 0; width: 100%;">
-        <div class="right sm my-3 mx-2">
+        <div class="card card-body right xs my-3 mx-2">
         Total Items:<input class="right sm" type="text" id="total" value=0 size=4 readonly/>
         <br/>Total Cost:<input class="right sm" type="text" id="cost" value=0 size=6 readonly/>
         <br/>CGST: <div class="right xs" id="cgst"> </div> <br/>
@@ -78,18 +101,19 @@
     <script>
         const electron = require('electron');
         const {ipcRenderer} = electron;
-        const ul = document.querySelector('ul');
+        const ul = document.querySelector('#table');
 
         ipcRenderer.on('item:add', (e,{item, qty, price}) => {
             ul.className = 'collection'
-            const li = document.createElement('li');
-            let row = "<div class='flex-row-container'>"
-            row += "<div style='flex-grow: 1' class='sm'>" + (ul.children.length) + "</div>"
-            row += "<div style='flex-grow: 6' class='sm'>" + item + "</div>"
-            row += "<div style='flex-grow: 1' class='sm'>" + qty + "</div>"
-            row += "<div style='flex-grow: 1' class='sm'>" + price + "</div>"
+            const li = document.createElement('tr');
+            
+            let row = ""
+            row += "<td style='flex-grow: 1' class='sm'>" + (ul.children.length) + "</td>"
+            row += "<td style='flex: 2 1 auto' class='sm'>" + item + "</td>"
+            row += "<td style='flex-grow: 1' class='sm'>" + parseFloat(qty).toFixed(2) + "</td>"
+            row += "<td style='flex-grow: 1' class='sm'>" + parseFloat(price).toFixed(2) + "</td>"
             let sum = qty * price;
-            row += "<div style='flex-grow: 1' class='sm'>" + sum + "</div></div>"
+            row += "<td style='flex-grow: 1' class='sm'>" + sum.toFixed(2) + "</td>"
              
             const itemText = document.createTextNode(row);
             li.className = 'collection-item'
@@ -100,7 +124,7 @@
             const cost = document.querySelector('#cost');
             const cgst = document.querySelector('#cgst');
             const sgst = document.querySelector('#sgst');
-            cost.value = parseFloat(cost.value) + (qty * price)
+            cost.value = (parseFloat(cost.value) + (qty * price)).toFixed(2)
             cgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)
             sgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)
             
@@ -114,7 +138,7 @@
                 ul.innerHTML = "<li class='collection-header nostyle'> " + 
                                 "<div class='flex-row-container'>" +
                                     "<div style='flex-grow: 1' class='sm'>#</div>" +
-                                    "<div style='flex-grow: 6' class='sm'>Item Name</div>" +
+                                    "<div style='flex: 2 1 auto' class='sm'>Item Name</div>" +
                                     "<div style='flex-grow: 1' class='sm'>Qty</div>" +
                                     "<div style='flex-grow: 1' class='sm'>Price</div>" +
                                     "<div style='flex-grow: 1' class='sm'>Sum</div>" +
@@ -134,17 +158,18 @@
         
         ul.addEventListener('dblclick', (e) => {
             
-            console.log(e.target.localName === 'div')
-            if(e.target.localName !== 'div') {
-                let qty = e.target.querySelector('.flex-row-container > div:nth-child(3)').textContent;
-                let price = e.target.querySelector('.flex-row-container > div:nth-child(4)').textContent;
-
-                let itemcost = parseFloat(parseFloat(qty) * parseFloat(price))
-                e.target.remove();
+            console.log(e)
+            if(e.target.localName === 'td') {
+                let qty = e.target.parentElement.children[2].textContent;
+                let price = e.target.parentElement.children[3].textContent;
+                
+                let itemcost = parseFloat(parseFloat(qty) * parseFloat(price)).toFixed(2)
+                console.log(qty, price, itemcost)
+                e.target.parentElement.remove();
                 const cost = document.querySelector('#cost');
                 const cgst = document.querySelector('#cgst');
                 const sgst = document.querySelector('#sgst');
-                cost.value = parseFloat(cost.value) - itemcost
+                cost.value = (parseFloat(cost.value) - itemcost).toFixed(2)
                 cgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)
                 sgst.textContent = (0.09 * parseFloat(cost.value)).toFixed(2)                
             }
@@ -164,9 +189,9 @@
         var myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+                labels: ["Parcel", "Fruits", "Vegetables", "Groceries", "Cookery", "Food"],
                 datasets: [{
-                    label: '# of Items',
+                    label: '# of Orders',
                     data: [12, 19, 3, 5, 2, 3],
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
@@ -203,15 +228,17 @@
             type: 'doughnut',
             data: {
                 datasets: [{
-                    data: [10, 20, 30],
+                    data: [10, 20, 30,3],
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
                         'rgba(54, 162, 235, 0.2)',
+                        'rgba(54, 235, 23, 0.2)',
                         'rgba(255, 206, 86, 0.2)'
                     ],
                     borderColor: [
                         'rgba(255,99,132,1)',
                         'rgba(54, 162, 235, 1)',
+                        'rgba(54, 235, 23, 1)',
                         'rgba(255, 206, 86, 1)'
                     ],
                     borderWidth: 1
@@ -219,9 +246,10 @@
 
                 // These labels appear in the legend and in the tooltips when hovering different arcs
                 labels: [
-                    'Red',
-                    'Blue',
-                    'Yellow'
+                    'Order ready',
+                    'In Transit',
+                    'Delivered',
+                    'Not Delivered'
                 ]
             }
         });
@@ -231,10 +259,10 @@
             {
                 "type":"radar",
                 "data": {
-                    "labels":["Eating","Drinking","Sleeping","Designing","Coding","Cycling","Running"],
+                    "labels":["Waiting","Collecting","Packing","Calls","Locating","On Transit","Success", "Failure"],
                     "datasets":[
                         {
-                            "label":"My First Dataset","data":[65,59,90,81,56,55,40],
+                            "label":"Rider 1 - Anuj","data":[65,59,90,81,56,55,40,2],
                             "fill":true,
                             "backgroundColor":"rgba(255, 99, 132, 0.2)",
                             "borderColor":"rgb(255, 99, 132)",
@@ -244,8 +272,8 @@
                             "pointHoverBorderColor":"rgb(255, 99, 132)"
                         },
                         {
-                            "label":"My Second Dataset",
-                            "data":[28,48,40,19,96,27,100],
+                            "label":"Rider 2 - Suraj",
+                            "data":[28,48,40,19,96,93,100,20],
                             "fill":true,
                             "backgroundColor":"rgba(54, 162, 235, 0.2)",
                             "borderColor":"rgb(54, 162, 235)",
@@ -263,6 +291,530 @@
                             }
                         }
                     });
+
+        </script>
+        <script>
+            
+            
+            //accessToken: 'pk.eyJ1Ijoic2FpLXByYXNhZCIsImEiOiJjanE4OGlpb3YxcHBxNDhxaGcwMjk2aGY2In0.QFQxwCkapvsidV7VXZkyPA'
+            var routes = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [74.77750897407532,13.348028966322483],
+                                [74.7774875164032,13.34810203933902],
+                                [74.77609813213348,13.347846283684413],
+                                [74.77448344230652,13.347428722849857],
+                                [74.77417767047882,13.347282576387206],
+                                [74.77412402629852,13.347360869146058],
+                                [74.77464973926544,13.347590527758937],
+                                [74.7771817445755,13.348185551330829],
+                                [74.77707982063293,13.349401691438741],
+                                [74.77806687355042,13.34949564192182],
+                                [74.77813124656677,13.35001758838427],
+                                [74.77719783782959,13.350748311536059],
+                                [74.77718710899353,13.350967528050322],
+                                [74.77729439735411,13.351124111152918],
+                                [74.77715492248535,13.351552104448514]
+                            ]
+                        },
+                        "properties": {
+                            "popupContent": "These are the Rider-2 delivery line .",
+                            "underConstruction": false,
+                            "style": {
+                                weight: 3 ,
+                                color: "rgb(54, 162, 235)",
+                                opacity: 1
+                            }
+                        },
+                        "id": 1
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [74.77756261825562,13.348002868811216],
+                                [74.77773427963257,13.348002868811216],
+                                [74.77802395820618,13.34613427967442],
+                                [74.77818489074707,13.346123840588348],
+                                [74.77868914604187,13.346343061301033],
+                                [74.77891445159912,13.346374378529463],
+                                [74.78001952171326,13.346374378529463],
+                                [74.78003025054932,13.345789789595905],
+                                [74.78142499923706,13.345121686224905],
+                                [74.78160738945007,13.344965099229997],
+                                [74.78290557861328,13.346614477145813],
+                                [74.7834849357605,13.346176036014187],
+                                [74.78387117385864,13.346760624012802]
+                            ]
+                        },
+                        "properties": {
+                            "popupContent": "These are the Rider-1 delivery line .",
+                            "underConstruction": false,
+                            "style": {
+                                weight: 3,
+                                color: "rgb(255, 99, 132)",
+                                opacity: 1
+                            }
+
+                        },
+                        "id": 2
+                    }
+                ]
+            };
+
+            function createIcon(filename) {
+                console.log("createIcon1 " + filename)
+                return L.icon({
+                    iconUrl: `https://img.icons8.com/color/48/000000/${filename}`,
+                    iconSize: [28,33],
+                    iconAnchor: [14,33],
+                    popupAnchor: [0, -24]
+                });
+            }
+
+            function createIconLower(filename, upDown) {
+                console.log("createIcon2 " + filename + upDown?-3:33)
+                return L.icon({
+                    iconUrl: `https://img.icons8.com/color/48/000000/${filename}`,
+                    iconSize: [28,33],
+                    iconAnchor: [14, upDown?33:5],
+                    popupAnchor: [0, -24]
+                });
+            }
+            var carIcon = createIcon("fiat-500.png"); // 1
+            var deliveryIcon = createIcon("delivery.png");
+            var shippedIcon = createIcon("shipped.png");
+            var cartIcon = createIcon("shopping-cart-loaded.png");
+            var billIcon = createIconLower("bill.png", false);
+            var hospitalIcon = createIcon("hospital.png");
+            var barcodeIcon = createIcon("barcode-scanner.png");
+            var buyIcon = createIcon("buy.png");
+            var checkoutIcon = createIcon("checkout.png");
+            var posIcon = createIcon("pos-terminal.png");
+            var eatIcon = createIcon("rice-bowl.png");
+            var supplierIcon = createIcon("supplier.png");
+            var restaurantIcon = createIcon("restaurant-membership-card.png");
+             
+            //https://img.icons8.com/color/48/000000/shopping-cart-loaded.png
+            // https://img.icons8.com/color/48/000000/bill.png
+            // https://img.icons8.com/color/48/000000/hospital.png
+
+            // https://img.icons8.com/color/48/000000/barcode-scanner.png
+            // https://img.icons8.com/color/48/000000/buy.png
+            // https://img.icons8.com/color/48/000000/checkout.png
+            // https://img.icons8.com/color/48/000000/pos-terminal.png
+
+            // https://img.icons8.com/color/48/000000/rice-bowl.png
+            // https://img.icons8.com/color/48/000000/supplier.png
+            // https://img.icons8.com/color/48/000000/restaurant-membership-card.png
+            var rider2 = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                74.77715492248535,
+                                13.351552104448514                            ]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider-2 delivery line",
+                            "icon" : deliveryIcon
+                        },
+                        "id": 51
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                74.77750897407532,
+                                13.348028966322483
+                            ]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider-2 delivery auto store",
+                            "icon" : carIcon
+                        },
+                        "id": 52
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.78565216064453,13.352105362950091]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 2 - delivery line",
+                            "icon": hospitalIcon
+                            
+                        },
+                        "id": 54
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.77802395820618,13.34613427967442]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 2 - delivery line",
+                            "icon" : barcodeIcon
+                        },
+                        "id": 55
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.78290557861328,13.346614477145813]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 2 - delivery line",
+                            "icon" : buyIcon
+                        },
+                        "id": 57
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.78003025054932,13.345789789595905]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 2 - delivery line",
+                            "icon" : cartIcon
+                        },
+                        "id": 58
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.78142499923706,13.345121686224905]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 2 - delivery line",
+                            "icon" : supplierIcon
+                        },
+                        "id": 74
+                    }
+                ]
+            };
+
+            var rider1 = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [ 74.78387117385864,13.346760624012802]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 1 - delivery line",
+                            "icon" : shippedIcon
+                        },
+                        "id": 51
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.77750897407532,13.348028966322483]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 1 - delivery line",
+                            "icon" : billIcon
+                        },
+                        "id": 52
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.77417767047882,13.347282576387206]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 1 - delivery line",
+                            "icon" : barcodeIcon
+                        },
+                        "id": 54
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.77707982063293,13.349401691438741]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 1 - delivery line",
+                            "icon" : checkoutIcon
+                        },
+                        "id": 55
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.77806687355042,13.34949564192182]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 1 - delivery line",
+                            "icon" : posIcon
+                        },
+                        "id": 57
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [74.77719783782959,13.350748311536059]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "Rider 1 - delivery line",
+                            "icon" : eatIcon
+                        },
+                        "id": 58
+                    },
+                    {
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [
+                                -104.9788452,
+                                39.6933755
+                            ]
+                        },
+                        "type": "Feature",
+                        "properties": {
+                            "popupContent": "This is a B-Cycle Station. Come pick up a bike and pay by the hour. What a deal!"
+                        },
+                        "id": 74
+                    }
+                ]
+            };
+
+            var grid1 = {
+                "type": "Feature",
+                "properties": {
+                    "popupContent": "Rider 1 - Grid",
+                    "style": {
+                        weight: 2,
+                        color: "#999",
+                        opacity: 0.7,
+                        fillColor: "rgb(255, 99, 132)",
+                        fillOpacity: 0.3,
+                        fillRule: 'evenodd',
+                        dashArray: '4 1 2'
+                    }
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [74.77560997009277,13.347595747270333],
+                            [74.77610349655151,13.34425523691316],
+                            [74.78365659713745,13.343503615715598],
+                            [74.78621006011963,13.347199064083103],
+                            [74.7849440574646,13.348013307816057],
+                            [74.78423595428467,13.347052917481449],
+                            [74.78324890136719,13.347240820238754],
+                            [74.7820472717285,13.348305599768455],
+                            [74.78024482727051,13.348284721783584],
+                            [74.77797031402588,13.348075941835642],
+                            [74.77560997009277,13.347595747270333]
+
+                        ]
+                    ]
+                }
+            };
+
+            var grid2 = {
+                "type": "Feature",
+                "properties": {
+                    "popupContent": "Rider 2 - Grid",
+                    "style": {
+                        weight: 2,
+                        color: "#999",
+                        opacity: 0.3,
+                        fillColor: "rgb(54, 162, 235)",
+                        fillOpacity: 0.3,
+                        fillRule: 'evenodd',
+                        dashArray: '4 1 2'
+                    }
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                        [74.77750897407532,13.348117697839669],
+                        [74.77896809577942,13.348399550678021],
+                        [74.77925777435303,13.348597891367048],
+                        [74.78193998336792,13.34875447600645],
+                        [74.7823691368103,13.34845174561198],
+                        [74.78285193443298,13.347846283684413],
+                        [74.7834849357605,13.347512235074536],
+                        [74.78397846221924,13.347470478965816],
+                        [74.78432178497314,13.34780452763344],
+                        [74.7855019569397,13.349098961855718],
+                        [74.78445053100586,13.350372511334218],
+                        [74.78363513946533,13.350372511334218],
+                        [74.78337764739989,13.348117697839669],
+                        [74.78284120559692,13.348785792922156],
+                        [74.78217601776123,13.34949564192182],
+                        [74.77940797805786,13.348764914978798],
+                        [74.77964401245117,13.350184611013955],
+                        [74.77824926376343,13.350581289296349],
+                        [74.77824926376343,13.351332888465071],
+                        [74.77756261825562,13.352335017050043],
+                        [74.77668285369873,13.352355894684658],
+                        [74.77627515792847,13.352105362950091],
+                        [74.77625370025635,13.35166693178897],
+                        [74.77728366851807,13.350226366653313],
+                        [74.77651119232178,13.350226366653313],
+                        [74.77526664733887,13.350059344052521],
+                        [74.77341055870056,13.34910940081318],
+                        [74.77392554283142,13.3472095031227],
+                        [74.77469801902771,13.34755399117604],
+                        [74.77750897407532,13.348117697839669]                            
+                        ]
+                    ]
+                }
+            };
+
+
+            var coorsField = {
+                "type": "Feature",
+                "properties": {
+                    "popupContent": "Eater Field",
+                    "icon" : restaurantIcon
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [74.78038652038574,13.349577013407443]
+                }
+            };
+
+            //var map = L.map('map').setView([39.74739, -105], 13);
+            var map = L.map('map').setView([13.346363939453774,74.7800087928772], 15.5);
+        
+          
+
+            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic2FpLXByYXNhZCIsImEiOiJjanE4OGlpb3YxcHBxNDhxaGcwMjk2aGY2In0.QFQxwCkapvsidV7VXZkyPA', {
+                maxZoom: 18,
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+                    '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                    'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                id: 'mapbox.light'
+            }).addTo(map);
+
+            function onEachFeature(feature, layer) {
+                var popupContent = "";
+
+                if (feature.properties && feature.properties.popupContent) {
+                    popupContent += feature.properties.popupContent;
+                }
+
+                layer.bindPopup(popupContent);
+                //console.log(feature.properties)
+                //layer.feature.properties.icon
+            }
+
+
+
+            L.geoJSON([rider2, grid2], {
+
+                style: function (feature) {
+                    //console.log('grid 2 ', feature)
+                    return feature.properties && feature.properties.style;
+                },
+
+                onEachFeature: onEachFeature,
+
+                pointToLayer: function (feature, latlng) {
+                    
+                    if(feature.properties && feature.properties.icon !== undefined) {
+                        return L.marker(latlng, {icon: feature.properties.icon});
+                    }
+                    else {
+                        return L.marker(latlng, {});
+                    }
+                    
+                    /*return L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: "#ff7800",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8,
+                        
+                    });*/
+                    
+                } 
+            }).addTo(map);
+
+            L.geoJSON([rider1, grid1], {
+
+                style: function (feature) {
+                    return feature.properties && feature.properties.style;
+                },
+
+                onEachFeature: onEachFeature,
+
+                pointToLayer: function (feature, latlng) {
+                    if(feature.properties && feature.properties.icon !== undefined) {
+                        return L.marker(latlng, {icon: feature.properties.icon});
+                    }
+                    else {
+                        return L.marker(latlng, {});
+                    }
+                    
+                    /*return L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: "#ff7800",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8,
+                        
+                    });*/
+                    
+                } 
+                }).addTo(map);
+
+
+            L.geoJSON(routes, {
+
+                style: function (feature) {
+                    return feature.properties && feature.properties.style;
+                },
+                
+                filter: function (feature, layer) {
+                    if (feature.properties) {
+                        // If the property "underConstruction" exists and is true, return false (don't render features under construction)
+                        return feature.properties.underConstruction !== undefined ? !feature.properties.underConstruction : true;
+                    }
+                    return false;
+                },
+
+                onEachFeature: onEachFeature
+            }).addTo(map);
+
+            var coorsLayer = L.geoJSON(coorsField, {
+
+                pointToLayer: function (feature, latlng) {
+                    return L.marker(latlng, {icon: restaurantIcon});
+                },
+
+                onEachFeature: onEachFeature
+            }).addTo(map);
 
         </script>
 </body>
